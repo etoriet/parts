@@ -25,21 +25,37 @@ local deployment = k.extensions.v1beta1.deployment;
           username: "",
           database: "",
         },
+
+        dataMount: {
+          name: "data",
+          mountPath: "/bitnami/mongodb",
+        },
       },
 
       persistent(namespace, name, mongoConfig=defaults.mongoConfig,  labels={app: name}, pvcName={claimName: name})::
-        base(namespace, name, mongoConfig, labels)
-        .withVolumes({
+        local volume = {
           name: "data",
-          persistentVolumeClaim: pvcName,
-        }),
+          persistentVolumeClaim: pvcName
+        };
+        base(namespace, name, mongoConfig, labels) +
+        deployment.mixin.spec.template.spec.withVolumes(volume) +
+        deployment.mapContainersWithName(
+          [name],
+          function(c) c + container.withVolumeMounts(defaults.dataMount)
+        ),
 
       nonPersistent(namespace, name, labels={app: name}, mongoConfig=defaults.mongoConfig)::
-        base(namespace, name, mongoConfig, labels)
-        .withVolumes({
+        local volume = {
           name: "data",
-          emptyDir: {},
-        }),
+          emptyDir: {}
+        };
+        base(namespace, name, mongoConfig, labels) +
+        deployment.mixin.spec.template.spec.withVolumes(volume) +
+        deployment.mapContainersWithName(
+          [name],
+          function(c) c + container.withVolumeMounts(defaults.dataMount)
+        ),
+
 
       local base(namespace, name, mongoConfig, labels) = {
         apiVersion: "extensions/v1beta1",
@@ -111,10 +127,6 @@ local deployment = k.extensions.v1beta1.deployment;
                   initialDelaySeconds: 5,
                   timeoutSeconds: 1,
                 },
-                volumeMounts: [{
-                  name: "data",
-                  mountPath: "/bitnami/mongodb",
-                }],
                 resources: defaults.resources,
               }],
             },
