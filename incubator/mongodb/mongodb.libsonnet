@@ -33,24 +33,24 @@ local container = deployment.mixin.spec.template.spec.containersType;
         },
       },
 
-      persistent(namespace, name, mongoConfig=defaults.mongoConfig,  labels={app: name}, pvcName={claimName: name})::
+      persistent(name, mongoConfig=defaults.mongoConfig,  labels={app: name}, pvcName={claimName: name})::
         local volume = {
           name: "data",
           persistentVolumeClaim: pvcName
         };
-        base(namespace, name, mongoConfig, labels) +
+        base(name, mongoConfig, labels) +
         deployment.mixin.spec.template.spec.withVolumes(volume) +
         deployment.mapContainersWithName(
           [name],
           function(c) c + container.withVolumeMounts(defaults.dataMount)
         ),
 
-      nonPersistent(namespace, name, labels={app: name}, mongoConfig=defaults.mongoConfig)::
+      nonPersistent(name, labels={app: name}, mongoConfig=defaults.mongoConfig)::
         local volume = {
           name: "data",
           emptyDir: {}
         };
-        base(namespace, name, mongoConfig, labels) +
+        base(name, mongoConfig, labels) +
         deployment.mixin.spec.template.spec.withVolumes(volume) +
         deployment.mapContainersWithName(
           [name],
@@ -58,11 +58,10 @@ local container = deployment.mixin.spec.template.spec.containersType;
         ),
 
 
-      local base(namespace, name, mongoConfig, labels) = {
+      local base(name, mongoConfig, labels) = {
         apiVersion: "extensions/v1beta1",
         kind: "Deployment",
         metadata: {
-          namespace: namespace,
           name: name,
           labels: labels,
         },
@@ -136,11 +135,10 @@ local container = deployment.mixin.spec.template.spec.containersType;
       },
     },
 
-    secrets(namespace, name, mongodbRootPassword, mongodbPassword):: {
+    secrets(name, mongodbRootPassword, mongodbPassword):: {
       apiVersion: "v1",
       kind: "Secret",
       metadata: {
-        namespace: namespace,
         name: name,
         labels: { app: name },
       },
@@ -151,11 +149,10 @@ local container = deployment.mixin.spec.template.spec.containersType;
       },
     },
 
-    service(namespace, name, serviceType="ClusterIP", selector={app: name}):: {
+    service(name, serviceType="ClusterIP", selector={app: name}):: {
       apiVersion: "v1",
       kind: "Service",
       metadata: {
-        namespace: namespace,
         name: name,
         labels: { app: name },
       },
@@ -170,7 +167,7 @@ local container = deployment.mixin.spec.template.spec.containersType;
       },
     },
 
-    pvc(namespace, name, storageClass="-"):: {
+    pvc(name, storageClass="-"):: {
       local defaults = {
         size: "8Gi",
         accessMode: "ReadWriteOnce",
@@ -180,7 +177,6 @@ local container = deployment.mixin.spec.template.spec.containersType;
       kind: "PersistentVolumeClaim",
       apiVersion: "v1",
       metadata: {
-        namespace: namespace,
         name: name,
       },
       spec: {

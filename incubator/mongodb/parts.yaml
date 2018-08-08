@@ -32,7 +32,6 @@
     "componentName": "mongo",
     "flags": {
       "name": "mongodb",
-      "namespace": "default",
       "rootPassword": "boots",
       "password": "boots"
     },
@@ -40,4 +39,3 @@
   },
   "license": "Apache 2.0"
 }
-
